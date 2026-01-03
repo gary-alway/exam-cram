@@ -1,4 +1,6 @@
-AWS Security specialty
+# AWS Certified Security - Specialty
+
+[Exam Guide](https://aws.amazon.com/certification/certified-security-specialty/)
 
 IAM / Policy model
 - SCPs define the maximum possible permissions

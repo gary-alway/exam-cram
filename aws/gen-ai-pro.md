@@ -1,3 +1,9 @@
+# AWS Certified Generative AI Developer - Professional
+
+[Exam Guide](https://aws.amazon.com/certification/certified-generative-ai-developer-professional/)
+
+---
+
 Comprehend — NLP on text (entities, sentiment, topics)
 Transcribe — speech → text
 Translate — language → language
