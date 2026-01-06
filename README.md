@@ -11,6 +11,8 @@ Condensed study notes for cloud certification exams. Designed to be ultra-brief,
 
 ## GCP
 
+- [Cloud Digital Leader](gcp/cloud-digital-leader.md)
+- [Generative AI Leader](gcp/gen-ai-leader.md)
 - [Professional Machine Learning Engineer](gcp/ml-engineer.md)
 
 ## Style Guide
