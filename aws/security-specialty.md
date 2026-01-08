@@ -156,6 +156,11 @@ VPC Endpoints / PrivateLink
 - Traffic stays on AWS network, never traverses public internet
 - Flow Logs exclude 169.254.169.254 (IMDS = Instance Metadata Service)
 - IMDSv2 = session-based + more secure
+- Enforce IMDSv2:
+    New instances → ec2:RunInstances with --metadata-options HttpTokens=required
+    Existing instances → ec2 modify-instance-metadata-options --http-tokens required
+- HttpEndpoint=disabled → turns off IMDS entirely (NOT the same as requiring v2)
+- NACLs CANNOT block 169.254.169.254 (link-local, not routed through network)
 
 CloudTrail
 - One org trail per org
