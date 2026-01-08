@@ -79,6 +79,11 @@ EC2 / networking
 - Isolation requires killing existing sessions (or moving to untracked flow)
 - mTLS requires server to terminate TLS → use NLB with TCP listener (passthrough)
 - ALB terminates TLS itself → cannot do true mTLS to backend
+- ALB → backend SG rules (SGs are stateful, no return rules needed):
+    ALB-SG: inbound 80/443 from 0.0.0.0/0, outbound 80 to WebAppSG
+    WebAppSG: inbound 80 from ALB-SG
+- Virtual appliance routing traffic between subnets → disable Source/Destination check on ENI
+- Source/Dest check: required off for NAT instances, firewalls, any traffic forwarding
 
 WAF / traffic
 - User-Agent blocking → WAF custom rules
@@ -111,11 +116,27 @@ KMS
 - Key policy can grant access WITHOUT IAM policy
 - If key policy allows principal directly → no IAM policy needed
 
+| Key Type            | Can Manage | Auto-Rotation              |
+|---------------------|------------|----------------------------|
+| Customer managed    | Yes        | Optional, every 365 days   |
+| AWS managed         | No         | Required, every 1095 days  |
+| AWS owned           | No         | Varies                     |
+
+- Custom key store (CloudHSM-backed) → CANNOT import key material, CANNOT auto-rotate
+- Imported key material → CANNOT auto-rotate
+- "Rotate every 12 months" → customer managed + enable auto-rotation (NOT AWS managed)
+- AWS managed rotation period is NOT customizable (always 1095 days)
+
 S3
 - Block Public Access overrides bucket policy
 - ACLs legacy; Object Ownership can disable ACLs
 - Object Lock Governance mode → can bypass with s3:BypassGovernanceRetention
 - Object Lock Compliance mode → CANNOT be bypassed by anyone incl. root
+- Deny + ArnNotEquals = allow ONLY listed principals (everyone else denied)
+- S3 cross-region replication with SSE-KMS:
+    Source key policy → kms:Decrypt for replication role
+    Destination key policy → kms:Encrypt for replication role
+    Replication role needs: kms:Decrypt, kms:ReEncryptFrom, kms:Encrypt, kms:ReEncryptTo
 
 CloudFront
 - OAI (Origin Access Identity) = legacy, does NOT support SSE-KMS S3 buckets
@@ -167,11 +188,13 @@ CloudTrail
 - Data events off by default
 - Can send data, Insights, and management events to CloudWatch Logs
 
-Inspector / Macie / GuardDuty
+Inspector / Macie / GuardDuty / Systems Manager
 - Inspector = vuln scan + network reachability assessments
 - Inspector detects EC2 port exposure violations → use with SNS for alerts
-- GuardDuty = threat detection
+- GuardDuty = threat detection (NOT vulnerability scanning)
 - Macie = S3 data classification
+- Systems Manager = software inventory + patching
+- "Identify vulnerable software version" → Systems Manager (NOT Config, NOT GuardDuty)
 
 ACM
 - DaysToExpiry CloudWatch metric for cert expiration alerts
@@ -181,3 +204,12 @@ ACM
 Secrets
 - Secrets Manager rotates
 - Parameter Store Standard does not rotate
+
+Lambda
+- Code signing via AWS Signer - 4 checks:
+    Integrity (required) → artifact not modified after signing
+    Source mismatch → signature missing or wrong signing profile
+    Expiry → signature past expiration
+    Revocation → signing profile marked invalid
+- Integrity check must pass or Lambda won't run
+- Other 3 checks configurable: block or warn
