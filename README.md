@@ -10,6 +10,7 @@ Condensed study notes for cloud certification exams. Designed to be ultra-brief,
 - [Generative AI Developer](aws/professional/gen-ai-developer.md)
 
 ### Specialty
+- [Advanced Networking](aws/specialty/advanced-networking.md)
 - [Security](aws/specialty/security.md)
 
 ## GCP
