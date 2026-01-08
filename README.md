@@ -6,16 +6,21 @@ Condensed study notes for cloud certification exams. Designed to be ultra-brief,
 
 ## AWS
 
-- [AWS Certified Generative AI Developer - Professional](aws/gen-ai-pro.md)
-- [AWS Certified Security - Specialty](aws/security-specialty.md)
+### Professional
+- [Generative AI Developer](aws/professional/gen-ai-developer.md)
+
+### Specialty
+- [Security](aws/specialty/security.md)
 
 ## GCP
 
-- [Cloud Digital Leader](gcp/cloud-digital-leader.md)
-- [Generative AI Leader](gcp/gen-ai-leader.md)
-- [Professional Machine Learning Engineer](gcp/ml-engineer.md)
+### Foundational
+- [Cloud Digital Leader](gcp/foundational/cloud-digital-leader.md)
+- [Generative AI Leader](gcp/foundational/gen-ai-leader.md)
+
+### Professional
+- [Machine Learning Engineer](gcp/professional/ml-engineer.md)
 
 ## Style Guide
 
 See [prompt.md](prompt.md) for the note-taking style guide used to format these notes.
-
