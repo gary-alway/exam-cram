@@ -82,6 +82,9 @@ EC2 / networking
 - Isolation requires killing existing sessions (or moving to untracked flow)
 - mTLS requires server to terminate TLS → use NLB with TCP listener (passthrough)
 - ALB terminates TLS itself → cannot do true mTLS to backend
+- "Secure even if private key compromised" → Forward Secrecy (FS) security policy on HTTPS listener
+- HTTP → HTTPS redirect: HTTP listener with redirect rule + HTTPS listener with ACM cert
+- Redirect rule goes on HTTP listener (NOT HTTPS listener)
 - ALB → backend SG rules (SGs are stateful, no return rules needed):
     ALB-SG: inbound 80/443 from 0.0.0.0/0, outbound 80 to WebAppSG
     WebAppSG: inbound 80 from ALB-SG
@@ -217,10 +220,12 @@ CloudTrail
 - Can send data, Insights, and management events to CloudWatch Logs
 - CloudTrail → S3 requires S3 bucket policy with s3:PutObject (NOT IAM role write access)
 
-Inspector / Macie / GuardDuty / Systems Manager
+Inspector / Macie / GuardDuty / Detective / Systems Manager
 - Inspector = vuln scan + network reachability assessments
 - Inspector detects EC2 port exposure violations → use with SNS for alerts
 - GuardDuty = threat detection (NOT vulnerability scanning)
+- Detective = security investigation visualizations
+- Detective requires GuardDuty enabled first (no 48-hour wait needed)
 - Macie = S3 data classification
 - Systems Manager = software inventory + patching
 - "Identify vulnerable software version" → Systems Manager
@@ -295,3 +300,7 @@ Incident Response
 
 Log Analytics
 - Real-time analytics + replay + persistent → Kinesis + OpenSearch
+
+Kinesis
+- Encrypted in transit via private network → Interface VPC endpoint for Kinesis
+- NOT VPN (traverses internet), NOT SSE-KMS alone (at rest only)
