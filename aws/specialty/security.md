@@ -84,6 +84,10 @@ EC2 / networking
     WebAppSG: inbound 80 from ALB-SG
 - Virtual appliance routing traffic between subnets → disable Source/Destination check on ENI
 - Source/Dest check: required off for NAT instances, firewalls, any traffic forwarding
+- EC2Rescue forensic analysis → /offline mode + device ID (NOT /online + instance ID)
+- Replace EC2 key pair → connect and update ~/.ssh/authorized_keys (CANNOT change via console/API)
+- Session Manager = no SSH/RDP, no inbound ports, logs to CloudWatch/S3
+- EC2 Instance Connect = still uses SSH/RDP protocols
 
 WAF / traffic
 - User-Agent blocking → WAF custom rules
@@ -115,6 +119,7 @@ KMS
 - You can lock yourself out with key policy
 - Key policy can grant access WITHOUT IAM policy
 - If key policy allows principal directly → no IAM policy needed
+- kms:ViaService condition → restrict KMS key to specific AWS service (e.g., s3.amazonaws.com)
 
 | Key Type            | Can Manage | Auto-Rotation              |
 |---------------------|------------|----------------------------|
@@ -159,6 +164,10 @@ VPC / Network
     allow + deny rules
     numbered rules, lowest wins
     must allow inbound AND outbound (e.g. ephemeral 1024-65535)
+- IPv6 private subnet outbound → Egress-only Internet Gateway (NOT NAT gateway)
+- NAT Gateway = IPv4 only
+- Direct Connect does NOT encrypt in transit
+- Encrypt DX traffic → VPN over DX with Virtual Private Gateway (VGW)
 
 VPC Endpoints / PrivateLink
 - PrivateLink = technology behind Interface Endpoints
@@ -204,6 +213,39 @@ ACM
 Secrets
 - Secrets Manager rotates
 - Parameter Store Standard does not rotate
+- Parameter Store SecureString + CMK errors:
+    Missing kms:Encrypt permission
+    CMK state = Disabled
+- CMK CAN encrypt multiple parameters
+- Key alias works fine (doesn't have to be key ID)
+
+AWS Config
+- Detect unencrypted RDS → AWS Config rule + SNS (NOT Systems Manager State Manager)
+- CANNOT create encrypted read replica from unencrypted RDS source
+- Config → SNS requires:
+    SNS topic policy: sns:Publish for config.amazonaws.com
+    IAM role policy: write access to S3 bucket
+- NOT trust policy for s3.amazonaws.com
+
+RDS
+- Encrypt existing unencrypted RDS → snapshot → copy snapshot with encryption → restore
+
+API Gateway
+- API usage analysis → enable access logging on stage + CloudWatch Logs Insights
+- NOT S3 + Athena for API Gateway logs
+
+ECS
+- Container logging → awslogs log driver in LogConfiguration (awslogs-group, awslogs-region)
+- NOT CloudWatch agent on container instances
+
+VPC Traffic Mirroring
+- Send copy of traffic to IDS/monitoring → Traffic Mirroring to NLB → target instance
+- NOT Flow Logs (metadata only, no packet content)
+- NOT disabling source/dest check (that's for routing, not mirroring)
+
+DDoS / Static Content Protection
+- Static content DDoS protection → S3 + CloudFront + WAF
+- NOT NLB (layer 4 only, no WAF integration)
 
 Lambda
 - Code signing via AWS Signer - 4 checks:
