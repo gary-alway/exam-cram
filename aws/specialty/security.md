@@ -11,6 +11,8 @@ IAM / Policy model
 - Region restriction → identity-based policy with aws:RequestedRegion
 - NotAction for global services (IAM, STS, CloudFront)
 - SCPs attach to OUs/accounts, NOT IAM groups
+- Tag-based EC2 access → tag instances + IAM policy with Condition element
+- Key policy with root principal → enables IAM policies to grant access
 
 IAM Identity Center (formerly AWS SSO)
 - Central SSO for multi-account access in AWS Organizations
@@ -19,6 +21,7 @@ IAM Identity Center (formerly AWS SSO)
 - Identity source: built-in store OR external IdP (AD, Okta, SAML 2.0)
 - For multi-account → use Identity Center, not IAM users per account
 - Integrates with AD via AD Connector or AWS Managed Microsoft AD
+- Multi-account AD SSO → Control Tower + Identity Center (NOT AD Connector per account)
 
 IAM Identity Center vs Cognito
 - Cognito User Pools = authentication (sign-up/sign-in, returns JWT)
@@ -82,6 +85,9 @@ EC2 / networking
 - ALB → backend SG rules (SGs are stateful, no return rules needed):
     ALB-SG: inbound 80/443 from 0.0.0.0/0, outbound 80 to WebAppSG
     WebAppSG: inbound 80 from ALB-SG
+- Three-tier SG best practice: chain SGs as sources
+    AppSG: inbound from WebSG
+    DBSG: inbound from AppSG
 - Virtual appliance routing traffic between subnets → disable Source/Destination check on ENI
 - Source/Dest check: required off for NAT instances, firewalls, any traffic forwarding
 - EC2Rescue forensic analysis → /offline mode + device ID (NOT /online + instance ID)
@@ -108,10 +114,15 @@ KMS / imported key material
 Organizations
 - SCPs apply to all identities incl. root
 - SCPs do NOT apply to the management account
+- SCP restricts service, need exception → move account to new OU without restrictive SCP
 
 STS / Federation
 - AssumeRole needs trust policy + caller allow
 - ExternalId prevents confused deputy
+- Cross-account role: update TRUST policy on TARGET account role (NOT IAM policy)
+- MFA required for assume-role → aws:MultiFactorAuthPresent in TRUST policy (NOT session policy)
+- Revoke compromised STS temp credentials → revoke sessions for IAM ROLE (NOT user)
+- create-role CLI → requires trust policy (assume-role-policy-document)
 
 KMS
 - Key policy evaluated before IAM
@@ -138,6 +149,8 @@ S3
 - Object Lock Governance mode → can bypass with s3:BypassGovernanceRetention
 - Object Lock Compliance mode → CANNOT be bypassed by anyone incl. root
 - Deny + ArnNotEquals = allow ONLY listed principals (everyone else denied)
+- Allow + IpAddress condition does NOT deny other IPs (only grants to matching IPs)
+- To block non-matching IPs → need explicit Deny with NotIpAddress condition
 - S3 cross-region replication with SSE-KMS:
     Source key policy → kms:Decrypt for replication role
     Destination key policy → kms:Encrypt for replication role
@@ -147,6 +160,9 @@ CloudFront
 - OAI (Origin Access Identity) = legacy, does NOT support SSE-KMS S3 buckets
 - OAC (Origin Access Control) = newer, supports SSE-KMS encrypted S3 origins
 - If an S3 origin uses SSE-KMS, CloudFront must use OAC, not OAI.
+- MITM/security headers protection → SecurityHeadersPolicy managed response headers
+- Add custom security headers → Lambda@Edge on origin response
+- NOT BasicCORS policy for security headers
 
 EFS
 - EFS security = VPC security groups + IAM policies
@@ -182,6 +198,8 @@ VPC Endpoints / PrivateLink
     route table entry, no ENI
     free
     NOT PrivateLink
+- Private subnet → DynamoDB = Gateway endpoint, SQS = Interface endpoint
+- Endpoint policies can restrict which resources are accessible
 - On-prem access to S3 via VPN/DX → need Interface Endpoint (not Gateway)
 - Traffic stays on AWS network, never traverses public internet
 - Flow Logs exclude 169.254.169.254 (IMDS = Instance Metadata Service)
@@ -196,6 +214,7 @@ CloudTrail
 - One org trail per org
 - Data events off by default
 - Can send data, Insights, and management events to CloudWatch Logs
+- CloudTrail → S3 requires S3 bucket policy with s3:PutObject (NOT IAM role write access)
 
 Inspector / Macie / GuardDuty / Systems Manager
 - Inspector = vuln scan + network reachability assessments
@@ -218,6 +237,8 @@ Secrets
     CMK state = Disabled
 - CMK CAN encrypt multiple parameters
 - Key alias works fine (doesn't have to be key ID)
+- InvalidKeyId error → KMS key is NOT enabled (disabled state)
+- SSH key rotation + auditing → Secrets Manager + Lambda rotation + CloudTrail
 
 AWS Config
 - Detect unencrypted RDS → AWS Config rule + SNS (NOT Systems Manager State Manager)
@@ -243,6 +264,11 @@ VPC Traffic Mirroring
 - NOT Flow Logs (metadata only, no packet content)
 - NOT disabling source/dest check (that's for routing, not mirroring)
 
+VPC Flow Logs
+- Detect port connection attempts → Flow Logs + metric filter + CloudWatch alarm
+- NOT Inspector for connection attempt detection
+- Block detected bad actors → update NACLs (NOT SGs for automated blocking)
+
 DDoS / Static Content Protection
 - Static content DDoS protection → S3 + CloudFront + WAF
 - NOT NLB (layer 4 only, no WAF integration)
@@ -255,3 +281,20 @@ Lambda
     Revocation → signing profile marked invalid
 - Integrity check must pass or Lambda won't run
 - Other 3 checks configurable: block or warn
+
+DynamoDB
+- Client-side encryption + tamper detection → DynamoDB Encryption Client
+- NOT KMS alone (encryption at rest only, no signing)
+- NOT AWS Encryption SDK (generic, not DynamoDB-specific)
+
+Glacier
+- Vault Lock policy error during InProgress → AbortVaultLock, update policy, initiate-vault-lock again
+- Once vault lock completed → CANNOT modify
+
+Incident Response
+- Automated forensic environment + orchestration → CloudFormation + Step Functions
+- NOT Shield (DDoS protection only)
+
+Log Analytics
+- Real-time analytics + replay + persistent → Kinesis + OpenSearch
+- NOT ElastiCache (caching, not analytics)
