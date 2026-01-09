@@ -67,7 +67,7 @@ GuardDuty
     (optional DynamoDB for dedupe/state)
     → remediation (WAF / NACL) + SNS alert
 - Instance isolation → update SG to remove all inbound/outbound rules
-- WAF = web traffic only, not instance-level isolation
+- WAF = web traffic only
 
 EventBridge
 - SES is NOT a supported target → use Lambda to call SES
@@ -131,6 +131,8 @@ KMS
 - Key policy can grant access WITHOUT IAM policy
 - If key policy allows principal directly → no IAM policy needed
 - kms:ViaService condition → restrict KMS key to specific AWS service (e.g., s3.amazonaws.com)
+- Temporary/programmatic KMS access → use grants (NOT key policy updates)
+- Grants = create/revoke without modifying policies
 
 | Key Type            | Can Manage | Auto-Rotation              |
 |---------------------|------------|----------------------------|
@@ -162,7 +164,6 @@ CloudFront
 - If an S3 origin uses SSE-KMS, CloudFront must use OAC, not OAI.
 - MITM/security headers protection → SecurityHeadersPolicy managed response headers
 - Add custom security headers → Lambda@Edge on origin response
-- NOT BasicCORS policy for security headers
 
 EFS
 - EFS security = VPC security groups + IAM policies
@@ -222,7 +223,7 @@ Inspector / Macie / GuardDuty / Systems Manager
 - GuardDuty = threat detection (NOT vulnerability scanning)
 - Macie = S3 data classification
 - Systems Manager = software inventory + patching
-- "Identify vulnerable software version" → Systems Manager (NOT Config, NOT GuardDuty)
+- "Identify vulnerable software version" → Systems Manager
 
 ACM
 - DaysToExpiry CloudWatch metric for cert expiration alerts
@@ -246,14 +247,12 @@ AWS Config
 - Config → SNS requires:
     SNS topic policy: sns:Publish for config.amazonaws.com
     IAM role policy: write access to S3 bucket
-- NOT trust policy for s3.amazonaws.com
 
 RDS
 - Encrypt existing unencrypted RDS → snapshot → copy snapshot with encryption → restore
 
 API Gateway
 - API usage analysis → enable access logging on stage + CloudWatch Logs Insights
-- NOT S3 + Athena for API Gateway logs
 
 ECS
 - Container logging → awslogs log driver in LogConfiguration (awslogs-group, awslogs-region)
@@ -266,7 +265,6 @@ VPC Traffic Mirroring
 
 VPC Flow Logs
 - Detect port connection attempts → Flow Logs + metric filter + CloudWatch alarm
-- NOT Inspector for connection attempt detection
 - Block detected bad actors → update NACLs (NOT SGs for automated blocking)
 
 DDoS / Static Content Protection
@@ -297,4 +295,3 @@ Incident Response
 
 Log Analytics
 - Real-time analytics + replay + persistent → Kinesis + OpenSearch
-- NOT ElastiCache (caching, not analytics)
