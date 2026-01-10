@@ -101,7 +101,8 @@ EC2 / networking
 WAF / traffic
 - User-Agent blocking → WAF custom rules
 - Missing User-Agent → custom or managed rules
-- WAF logging → Kinesis Firehose → S3
+- WAF logging for analysis → Kinesis Firehose → S3
+- WAF logging for simple storage → direct to S3 (most operationally efficient)
 
 KMS / EBS
 - EBS + CMK launch failure:
@@ -219,6 +220,7 @@ CloudTrail
 - Data events off by default
 - Can send data, Insights, and management events to CloudWatch Logs
 - CloudTrail → S3 requires S3 bucket policy with s3:PutObject (NOT IAM role write access)
+- Multi-region logging (simplest) → change existing trail to all regions + single S3 bucket
 
 Inspector / Macie / GuardDuty / Detective / Systems Manager
 - Inspector = vuln scan + network reachability assessments
