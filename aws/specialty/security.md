@@ -203,6 +203,7 @@ VPC Endpoints / PrivateLink
     route table entry, no ENI
     free
     NOT PrivateLink
+- Gateway endpoint not working → associate with subnet's route table
 - Private subnet → DynamoDB = Gateway endpoint, SQS = Interface endpoint
 - Endpoint policies can restrict which resources are accessible
 - On-prem access to S3 via VPN/DX → need Interface Endpoint (not Gateway)
@@ -257,6 +258,7 @@ AWS Config
 
 RDS
 - Encrypt existing unencrypted RDS → snapshot → copy snapshot with encryption → restore
+- RDS encryption in transit (SSL/TLS) → download AWS root certificates, use in connection
 
 API Gateway
 - API usage analysis → enable access logging on stage + CloudWatch Logs Insights
@@ -276,6 +278,7 @@ VPC Flow Logs
 
 DDoS / Static Content Protection
 - Static content DDoS protection → S3 + CloudFront + WAF
+- DDoS attack response → WAF web ACL rules + Shield Advanced
 - NOT NLB (layer 4 only, no WAF integration)
 
 Lambda
