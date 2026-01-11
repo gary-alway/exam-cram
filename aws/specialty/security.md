@@ -225,6 +225,7 @@ CloudTrail
 
 Inspector / Macie / GuardDuty / Detective / Systems Manager
 - Inspector = vuln scan + network reachability assessments
+- Inspector network reachability = inbound listening ports only (NOT outbound connections)
 - Inspector detects EC2 port exposure violations → use with SNS for alerts
 - GuardDuty = threat detection (NOT vulnerability scanning)
 - Detective = security investigation visualizations
