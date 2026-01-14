@@ -187,6 +187,7 @@ S3
 - ACLs legacy; Object Ownership can disable ACLs
 - Object Lock Governance mode → can bypass with s3:BypassGovernanceRetention
 - Object Lock Compliance mode → CANNOT be bypassed by anyone incl. root
+- "Truly immutable / no admin can delete" → Compliance mode (NOT Governance)
 - Deny + ArnNotEquals = allow ONLY listed principals (everyone else denied)
 - Allow + IpAddress condition does NOT deny other IPs (only grants to matching IPs)
 - To block non-matching IPs → need explicit Deny with NotIpAddress condition
@@ -278,6 +279,8 @@ Inspector / Macie / GuardDuty / Detective / Systems Manager
 - Detective = security investigation visualizations
 - Detective requires GuardDuty enabled first (no 48-hour wait needed)
 - Macie = S3 data classification
+- Macie publishes only policy findings to Security Hub by default
+- Sensitive data findings require explicit publication config in Macie
 - Systems Manager = software inventory + patching
 - "Identify vulnerable software version" → Systems Manager
 
@@ -305,6 +308,8 @@ Secrets
     Maintains two valid credential sets
     Eliminates auth failures during rotation
     Use with exponential backoff retry for Aurora replica propagation delays
+- CancelRotateSecret stops rotation but does NOT clean up staging labels
+- After cancel, may need to manually remove AWSPENDING label and rollback
 - "Zero downtime DB credential rotation" → alternating users + retry with backoff
 
 AWS Config
