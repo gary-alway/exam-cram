@@ -84,6 +84,12 @@ GuardDuty
 EventBridge
 - SES is NOT a supported target → use Lambda to call SES
 
+Security Hub
+- Cross-Region finding aggregation requires explicit configuration
+- Designate aggregation Region + specify linked Regions
+- Without cross-Region config, findings remain isolated in their Regions
+- "Findings not aggregating across Regions" → enable cross-Region aggregation
+
 Audit Manager
 - Produces digest.txt file with each assessment report
 - digest.txt = report file checksum for integrity validation
@@ -159,6 +165,11 @@ KMS
 - kms:ViaService condition → restrict KMS key to specific AWS service (e.g., s3.amazonaws.com)
 - Temporary/programmatic KMS access → use grants (NOT key policy updates)
 - Grants = create/revoke without modifying policies
+- KMS follows eventual consistency model
+- Grants may take several minutes to propagate
+- Grant token allows immediate use before grant fully propagates
+- CreateGrant returns GrantToken → include in subsequent KMS API calls
+- "Grant not working immediately" → use GrantToken returned from API until eventual consistency achieved
 
 | Key Type            | Can Manage | Auto-Rotation              |
 |---------------------|------------|----------------------------|
@@ -242,6 +253,9 @@ Route 53 VPC Resolver
 - Caches DNS responses for VPCs
 - Query logging only logs unique queries NOT served from cache
 - "Fewer logs than expected DNS queries" → cache hits not logged (by design)
+
+Route 53 DNS Firewall
+- Rule groups evaluated starting with LOWEST numeric priority first
 
 Transit Gateway
 - Appliance mode on TGW VPC attachment → ensures symmetric routing
