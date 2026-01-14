@@ -50,6 +50,13 @@ IAM / access troubleshooting
 - Check endpoint policy before IAM / boundaries
 - Assumed role auth issues → check session policy (not just boundary)
 - Session policy = passed at assume-role time, easy to overlook
+- Explicit deny in ANY policy overrides allows in ALL other policies
+- Deny-overrides-allow applies across identity + resource policies in same account
+
+STS session policies
+- Pass inline session policy during AssumeRole API call
+- Effective permissions = intersection of role policy AND session policy
+- Use to further restrict credentials for specific use cases
 
 Service control
 - Service Catalog → launch constraint = force role to use
@@ -68,9 +75,19 @@ GuardDuty
     → remediation (WAF / NACL) + SNS alert
 - Instance isolation → update SG to remove all inbound/outbound rules
 - WAF = web traffic only
+- Severity is numeric (0.0-10.0), NOT strings like 'HIGH'
+- Finding type includes resource prefix (e.g., CryptoCurrency:EC2/BitcoinTool.B)
+- Exact match on 'type' field misses variations → use prefix matching
+- Multi-account: EventBridge rules in delegated admin capture member findings
+- Notification frequency (15 min, 1 hour, 6 hours default) → set from admin account only
 
 EventBridge
 - SES is NOT a supported target → use Lambda to call SES
+
+Audit Manager
+- Produces digest.txt file with each assessment report
+- digest.txt = report file checksum for integrity validation
+- Cryptographic proof that report contents NOT tampered with
 
 Logging / governance
 - CloudTrail prefix change → update S3 policy + trail config
@@ -97,6 +114,11 @@ EC2 / networking
 - Replace EC2 key pair → connect and update ~/.ssh/authorized_keys (CANNOT change via console/API)
 - Session Manager = no SSH/RDP, no inbound ports, logs to CloudWatch/S3
 - EC2 Instance Connect = still uses SSH/RDP protocols
+- EC2 role credentials from IMDS are temporary (auto-rotated)
+- New credentials available at least 5 minutes before expiration
+- App manually caching credentials → may use expired creds after rotation
+- "Intermittent auth failures on EC2" → use SDK's built-in credential provider chain
+- SDK credential provider chain handles automatic refresh
 
 WAF / traffic
 - User-Agent blocking → WAF custom rules
@@ -216,6 +238,17 @@ VPC Endpoints / PrivateLink
 - HttpEndpoint=disabled → turns off IMDS entirely (NOT the same as requiring v2)
 - NACLs CANNOT block 169.254.169.254 (link-local, not routed through network)
 
+Route 53 VPC Resolver
+- Caches DNS responses for VPCs
+- Query logging only logs unique queries NOT served from cache
+- "Fewer logs than expected DNS queries" → cache hits not logged (by design)
+
+Transit Gateway
+- Appliance mode on TGW VPC attachment → ensures symmetric routing
+- Uses flow hash to select single network interface for life of flow
+- Required for stateful firewalls that need both directions of traffic
+- "Asymmetric routing with inspection VPC" → enable appliance mode
+
 CloudTrail
 - One org trail per org
 - Data events off by default
@@ -238,6 +271,11 @@ ACM
 - DaysToExpiry CloudWatch metric for cert expiration alerts
 - Security Hub does NOT have built-in ACM cert expiration monitoring
 - Expiry alerting: ACM metric → CloudWatch Alarm → Lambda → SNS
+- Auto-renewal for DNS-validated certs requires:
+    Certificate in use (e.g., with ALB)
+    CNAME validation records still in place
+- Certificate ARN unchanged after renewal → no config changes needed
+- "Certificate expiring, no action needed" → DNS-validated + in use + CNAME exists
 
 Secrets
 - Secrets Manager rotates
@@ -249,6 +287,11 @@ Secrets
 - Key alias works fine (doesn't have to be key ID)
 - InvalidKeyId error → KMS key is NOT enabled (disabled state)
 - SSH key rotation + auditing → Secrets Manager + Lambda rotation + CloudTrail
+- Alternating users rotation strategy:
+    Maintains two valid credential sets
+    Eliminates auth failures during rotation
+    Use with exponential backoff retry for Aurora replica propagation delays
+- "Zero downtime DB credential rotation" → alternating users + retry with backoff
 
 AWS Config
 - Detect unencrypted RDS → AWS Config rule + SNS (NOT Systems Manager State Manager)
@@ -256,6 +299,8 @@ AWS Config
 - Config → SNS requires:
     SNS topic policy: sns:Publish for config.amazonaws.com
     IAM role policy: write access to S3 bucket
+- CANNOT deliver to S3 buckets with Object Lock default retention enabled
+- Object Lock retention CANNOT be bypassed via bucket policies
 
 RDS
 - Encrypt existing unencrypted RDS → snapshot → copy snapshot with encryption → restore
@@ -276,6 +321,10 @@ VPC Traffic Mirroring
 VPC Flow Logs
 - Detect port connection attempts → Flow Logs + metric filter + CloudWatch alarm
 - Block detected bad actors → update NACLs (NOT SGs for automated blocking)
+- Apache Parquet format → 10-100x faster queries, 20% less storage with Gzip
+- Hourly partitions → reduce data scanned, lower Athena costs
+- Hive-compatible S3 prefixes → automatic partition discovery in Athena (no ALTER TABLE)
+- "Optimize flow logs for Athena analysis" → Parquet + hourly partitions + Hive prefixes
 
 DDoS / Static Content Protection
 - Static content DDoS protection → S3 + CloudFront + WAF
